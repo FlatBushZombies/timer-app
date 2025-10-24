@@ -4,7 +4,18 @@ module.exports = {
   content: ["./App.tsx", "./components/**/*.{js,jsx,ts,tsx}", "./app/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
-    extend: {},
+    extend: {
+        colors: {
+          primary: ''
+        },
+        fontFamily: {
+        quicksand: ["Quicksand-Regular", "sans-serif"],
+        "quicksand-bold": ["Quicksand-Bold", "sans-serif"],
+        "quicksand-semibold": ["Quicksand-SemiBold", "sans-serif"],
+        "quicksand-light": ["Quicksand-Light", "sans-serif"],
+        "quicksand-medium": ["Quicksand-Medium", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 }
