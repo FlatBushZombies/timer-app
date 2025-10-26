@@ -1,3 +1,4 @@
+import { images } from "@/constants"
 import { View, Text, Image, Dimensions } from "react-native"
 import Swiper from "react-native-swiper"
 
@@ -13,19 +14,19 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     id: 1,
-    image: "/meditation-person-sitting-peacefully.jpg",
+    image: images.achievement,
     title: "Set meaningful goals",
     description: "Define your wellness journey with personalized goals that inspire and motivate you every day.",
   },
   {
     id: 2,
-    image: "/focused-person-with-calm-energy.jpg",
+    image: images.focused,
     title: "Stay focused, stay present",
     description: "Build lasting habits with mindful practices that keep you centered and on track.",
   },
   {
     id: 3,
-    image: "/achievement-trophy-with-progress-chart.jpg",
+    image: images.sleep,
     title: "Track your progress",
     description: "Celebrate every milestone and watch your transformation unfold with detailed insights.",
   },

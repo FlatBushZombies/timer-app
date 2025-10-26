@@ -191,22 +191,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <View className="bg-[#1A1A1A] mx-6 mb-6 rounded-full flex-row items-center justify-around py-4 px-6">
-        <TouchableOpacity className="items-center">
-          <Ionicons name="home" size={24} color="#8B7FE8" />
-        </TouchableOpacity>
-        <TouchableOpacity className="items-center">
-          <Ionicons name="calendar-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity className="items-center">
-          <Ionicons name="add-circle-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity className="items-center">
-          <Ionicons name="person-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
