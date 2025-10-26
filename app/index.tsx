@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins';
+import { router } from 'expo-router';
 
 export default function Index() {
   let [fontsLoaded] = useFonts({
@@ -19,8 +20,7 @@ export default function Index() {
   });
 
   const handleGetStarted = () => {
-    // Navigate to next screen
-    console.log('Get started pressed');
+    router.push('/(auth)/signin')
   };
 
   if (!fontsLoaded) {
