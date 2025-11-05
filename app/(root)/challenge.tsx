@@ -1,11 +1,9 @@
-import { Text, View } from "react-native"
+import { View, Text } from "react-native"
 
 const Challenge = () => {
     return (
         <View>
-            <Text>
-                Challenge
-            </Text>
+            <Text> Challenge </Text>
         </View>
     )
 }
