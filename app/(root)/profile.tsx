@@ -6,10 +6,17 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 interface MenuItem {
   id: string;
-  icon: string;
+  icon: any;
   label: string;
   onPress: () => void;
   showArrow?: boolean;
@@ -21,59 +28,38 @@ export default function ProfileScreen() {
   const menuItems: MenuItem[] = [
     {
       id: 'friends',
-      icon: '👥',
+      icon: <AntDesign name="aliwangwang" size={24} color="white" />,
       label: 'Friends',
       onPress: () => Alert.alert('Friends', 'View your friends list'),
       showArrow: true,
     },
     {
       id: 'settings',
-      icon: '⚙️',
+      icon: <Feather name="settings" size={24} color="white" />,
       label: 'Settings',
       onPress: () => Alert.alert('Settings', 'Manage your settings'),
       showArrow: true,
-    },
-    {
-      id: 'notifications',
-      icon: '🔔',
-      label: 'Notifications',
-      onPress: () => Alert.alert('Notifications', 'Notification preferences'),
-      showArrow: true,
-    },
-    {
-      id: 'account',
-      icon: '👤',
-      label: 'Account Setting',
-      onPress: () => Alert.alert('Account', 'Manage your account'),
-      showArrow: true,
-    },
+    }
   ];
 
   const footerItems: MenuItem[] = [
     {
       id: 'terms',
-      icon: '📋',
+      icon: <FontAwesome6 name="sheet-plastic" size={24} color="yellow" />,
       label: 'Terms of Service',
       onPress: () => Alert.alert('Terms of Service', 'Our terms and conditions'),
       showArrow: false,
     },
     {
       id: 'privacy',
-      icon: '🔒',
+      icon: <MaterialIcons name="privacy-tip" size={24} color="yellow" />,
       label: 'Privacy Policy',
       onPress: () => Alert.alert('Privacy Policy', 'Our privacy practices'),
       showArrow: false,
     },
     {
-      id: 'teams',
-      icon: '🏢',
-      label: 'Teams',
-      onPress: () => Alert.alert('Teams', 'View and manage teams'),
-      showArrow: false,
-    },
-    {
       id: 'review',
-      icon: '⭐',
+      icon: <FontAwesome name="star-half-o" size={24} color="yellow" />,
       label: 'Give us a review',
       onPress: () => Alert.alert('Review', 'Leave us a review on the store'),
       showArrow: false,
@@ -154,10 +140,14 @@ export default function ProfileScreen() {
         {/* Social Links */}
         <View className="flex-row justify-center gap-5 mt-3 pb-5">
           <TouchableOpacity className="w-11 h-11 rounded-full bg-neutral-900 items-center justify-center">
-            <Text className="text-xl">📷</Text>
+            <Text className="text-xl">
+              <MaterialCommunityIcons name="camera" size={24} color="white" />
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity className="w-11 h-11 rounded-full bg-neutral-900 items-center justify-center">
-            <Text className="text-xl">𝕏</Text>
+            <Text className="text-xl">
+              <AntDesign name="x" size={24} color="white" />
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
