@@ -1,506 +1,221 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  TextInput,
-  FlatList,
-  Alert,
-} from 'react-native';
-import { EnrichedTextInput } from 'react-native-enriched'
+"use client"
 
-const { width } = Dimensions.get('window');
+import { useState } from "react"
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Image } from "react-native"
+import { useUser } from "@clerk/clerk-expo"
+import { AntDesign, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 interface Goal {
-  id: string;
-  title: string;
-  duration: number; // in seconds
-  timeLeft: number; // in seconds
-  isRunning: boolean;
-  createdAt: number;
+  id: string
+  title: string
+  duration: number
+  category: string
+  color: string
+  icon: string
+  rating: number
 }
 
 export default function HomeScreen() {
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [goalInput, setGoalInput] = useState('');
-  const [timerInput, setTimerInput] = useState('5');
-  const [showForm, setShowForm] = useState(false);
-
-  // Timer effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGoals(prevGoals =>
-        prevGoals.map(goal => {
-          if (goal.isRunning && goal.timeLeft > 0) {
-            return { ...goal, timeLeft: goal.timeLeft - 1 };
-          } else if (goal.isRunning && goal.timeLeft === 0) {
-            Alert.alert('Goal Complete!', `You finished: ${goal.title}`);
-            return { ...goal, isRunning: false };
-          }
-          return goal;
-        })
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const { user } = useUser()
+  const [showForm, setShowForm] = useState(false)
+  const [goalInput, setGoalInput] = useState("")
+  const [timerInput, setTimerInput] = useState("5")
+  const [goals, setGoals] = useState<Goal[]>([
+    {
+      id: "1",
+      title: "Morning Workout Routine",
+      duration: 30,
+      category: "Health & Fitness",
+      color: "#D4F4E7",
+      icon: "dumbbell",
+      rating: 4.5,
+    },
+    {
+      id: "2",
+      title: "Deep Focus Coding Session",
+      duration: 45,
+      category: "Tech & Software",
+      color: "#E8D4F4",
+      icon: "laptop",
+      rating: 4.2,
+    },
+  ])
 
   const addGoal = () => {
     if (!goalInput.trim()) {
-      Alert.alert('Error', 'Please enter a goal');
-      return;
-    }
-    if (!timerInput || parseInt(timerInput) <= 0) {
-      Alert.alert('Error', 'Please enter a valid duration in minutes');
-      return;
+      Alert.alert("Error", "Please enter a goal")
+      return
     }
 
-    const seconds = parseInt(timerInput) * 60;
+    const colors = ["#D4F4E7", "#E8D4F4", "#F4E8D4", "#D4E4F4"]
+    const icons = ["target", "dumbbell", "laptop", "book-open-variant", "brain"]
+
     const newGoal: Goal = {
       id: Date.now().toString(),
       title: goalInput,
-      duration: seconds,
-      timeLeft: seconds,
-      isRunning: false,
-      createdAt: Date.now(),
-    };
+      duration: Number.parseInt(timerInput) || 5,
+      category: "Personal Goal",
+      color: colors[Math.floor(Math.random() * colors.length)],
+      icon: icons[Math.floor(Math.random() * icons.length)],
+      rating: 0,
+    }
 
-    setGoals([newGoal, ...goals]);
-    setGoalInput('');
-    setTimerInput('5');
-    setShowForm(false);
-  };
-
-  const toggleTimer = (id: string) => {
-    setGoals(prevGoals =>
-      prevGoals.map(goal =>
-        goal.id === id ? { ...goal, isRunning: !goal.isRunning } : goal
-      )
-    );
-  };
+    setGoals([newGoal, ...goals])
+    setGoalInput("")
+    setTimerInput("5")
+    setShowForm(false)
+  }
 
   const deleteGoal = (id: string) => {
-    setGoals(goals.filter(goal => goal.id !== id));
-  };
-
-  const resetGoal = (id: string) => {
-    setGoals(prevGoals =>
-      prevGoals.map(goal =>
-        goal.id === id
-          ? { ...goal, timeLeft: goal.duration, isRunning: false }
-          : goal
-      )
-    );
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getProgressPercentage = (goal: Goal) => {
-    return ((goal.duration - goal.timeLeft) / goal.duration) * 100;
-  };
+    Alert.alert("Delete Goal", "Are you sure you want to delete this goal?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", onPress: () => setGoals(goals.filter((g) => g.id !== id)), style: "destructive" },
+    ])
+  }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Goal Timer</Text>
-        <Text style={styles.headerSubtitle}>Track your goals with timers</Text>
+      <View className="px-5 py-4 bg-white">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
+            <Image
+              source={{ uri: user?.imageUrl || "https://avatar.iran.liara.run/public/42" }}
+              className="w-12 h-12 rounded-full mr-3"
+            />
+            <View>
+              <Text className="text-gray-900 text-lg font-bold">Hello {user?.firstName || "Alex"}</Text>
+              <View className="flex-row items-center mt-0.5">
+                <View className="w-2 h-2 rounded-full bg-green-500 mr-1.5" />
+                <View className="h-1.5 bg-blue-400 rounded-full" style={{ width: 60 }} />
+              </View>
+            </View>
+          </View>
+          <TouchableOpacity className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
+            <Ionicons name="notifications-outline" size={22} color="#374151" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Add Goal Button */}
-        {!showForm && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowForm(true)}
-          >
-            <Text style={styles.addButtonText}>+ Add New Goal</Text>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Title Section */}
+        <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
+          <View>
+            <Text className="text-gray-900 text-3xl font-bold">Your Progress</Text>
+            <Text className="text-gray-900 text-3xl font-bold">Today</Text>
+          </View>
+          <TouchableOpacity className="w-11 h-11 rounded-full bg-white items-center justify-center shadow-sm">
+            <Ionicons name="search" size={22} color="#374151" />
           </TouchableOpacity>
+        </View>
+
+        {/* Add Goal Button - Floating */}
+        {!showForm && (
+          <View className="px-5 mb-4">
+            <TouchableOpacity
+              onPress={() => setShowForm(true)}
+              className="bg-gray-900 rounded-2xl py-4 px-5 flex-row items-center justify-center shadow-lg"
+            >
+              <AntDesign name="plus" size={20} color="white" />
+              <Text className="text-white font-bold text-base ml-2">Add New Goal</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
-        {/* Goal Form */}
+        {/* Goal Creation Form */}
         {showForm && (
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Create a New Goal</Text>
+          <View className="mx-5 mb-5 bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+            <Text className="text-gray-900 font-bold text-xl mb-4">Create a New Goal</Text>
 
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Goal Description</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g., Do abs at the gym"
-                placeholderTextColor="#999"
-                value={goalInput}
-                onChangeText={setGoalInput}
-                multiline
-                maxLength={100}
-              />
-              
-              <Text style={styles.charCount}>{goalInput.length}/100</Text>
-            </View>
+            <Text className="text-gray-700 font-semibold mb-2 text-sm">Goal Description</Text>
+            <TextInput
+              value={goalInput}
+              onChangeText={setGoalInput}
+              placeholder="e.g., Morning meditation practice"
+              placeholderTextColor="#9CA3AF"
+              className="border border-gray-200 rounded-2xl p-4 mb-1 bg-gray-50 text-gray-900"
+            />
+            <Text className="text-gray-400 text-right text-xs mb-3">{goalInput.length}/100</Text>
 
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Duration (minutes)</Text>
-              <TextInput
-                style={styles.numberInput}
-                placeholder="5"
-                placeholderTextColor="#999"
-                value={timerInput}
-                onChangeText={setTimerInput}
-                keyboardType="number-pad"
-                maxLength={3}
-              />
-            </View>
+            <Text className="text-gray-700 font-semibold mb-2 text-sm">Duration (minutes)</Text>
+            <TextInput
+              value={timerInput}
+              onChangeText={setTimerInput}
+              placeholder="5"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="number-pad"
+              className="border border-gray-200 rounded-2xl p-4 bg-gray-50 text-gray-900"
+            />
 
-            <View style={styles.formButtons}>
-              <TouchableOpacity
-                style={[styles.formButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowForm(false);
-                  setGoalInput('');
-                  setTimerInput('5');
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+            <View className="flex-row justify-end mt-5 space-x-3">
+              <TouchableOpacity onPress={() => setShowForm(false)} className="bg-gray-100 px-6 py-3 rounded-xl">
+                <Text className="text-gray-700 font-bold">Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.formButton, styles.submitButton]}
-                onPress={addGoal}
-              >
-                <Text style={styles.submitButtonText}>Create Goal</Text>
+              <TouchableOpacity onPress={addGoal} className="bg-gray-900 px-6 py-3 rounded-xl ml-3">
+                <Text className="text-white font-bold">Create</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
         {/* Goals List */}
-        {goals.length > 0 ? (
-          <View style={styles.goalsSection}>
-            <Text style={styles.sectionTitle}>Active Goals</Text>
-            {goals.map(goal => (
-              <View key={goal.id} style={styles.goalCard}>
-                {/* Goal Header */}
-                <View style={styles.goalHeader}>
-                  <Text style={styles.goalTitle}>{goal.title}</Text>
-                  <TouchableOpacity
-                    onPress={() => deleteGoal(goal.id)}
-                    style={styles.deleteButton}
-                  >
-                    <Text style={styles.deleteButtonText}>✕</Text>
-                  </TouchableOpacity>
+        <View className="px-5">
+          {goals.length === 0 ? (
+            <View className="bg-white rounded-3xl p-8 items-center justify-center border border-gray-100">
+              <MaterialCommunityIcons name="target" size={48} color="#D1D5DB" />
+              <Text className="text-gray-400 text-center mt-4 text-base">
+                No goals yet. Create your first goal to get started!
+              </Text>
+            </View>
+          ) : (
+            goals.map((goal, index) => (
+              <View key={goal.id} className="rounded-3xl p-5 mb-4 shadow-sm" style={{ backgroundColor: goal.color }}>
+                {/* Top Row */}
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="w-12 h-12 rounded-2xl bg-white items-center justify-center">
+                    <MaterialCommunityIcons name={goal.icon as any} size={24} color="#374151" />
+                  </View>
+                  {goal.rating > 0 && (
+                    <View className="flex-row items-center bg-white rounded-full px-3 py-1.5">
+                      <Ionicons name="star" size={16} color="#FCD34D" />
+                      <Text className="text-gray-900 font-bold ml-1 text-sm">{goal.rating}</Text>
+                    </View>
+                  )}
                 </View>
 
-                {/* Timer Display */}
-                <View style={styles.timerContainer}>
-                  <Text style={styles.timerText}>
-                    {formatTime(goal.timeLeft)}
-                  </Text>
-                  <Text style={styles.timerLabel}>
-                    of {formatTime(goal.duration)}
-                  </Text>
-                </View>
+                {/* Category */}
+                <Text className="text-gray-600 text-sm font-medium mb-1">{goal.category}</Text>
 
-                {/* Progress Bar */}
-                <View style={styles.progressBarContainer}>
-                  <View
-                    style={[
-                      styles.progressBar,
-                      {
-                        width: `${getProgressPercentage(goal)}%`,
-                      },
-                    ]}
-                  />
-                </View>
+                {/* Title */}
+                <Text className="text-gray-900 text-lg font-bold mb-4">{goal.title}</Text>
 
-                {/* Control Buttons */}
-                <View style={styles.controlButtons}>
-                  <TouchableOpacity
-                    style={[
-                      styles.controlButton,
-                      goal.isRunning
-                        ? styles.pauseButton
-                        : styles.playButton,
-                    ]}
-                    onPress={() => toggleTimer(goal.id)}
-                  >
-                    <Text style={styles.controlButtonText}>
-                      {goal.isRunning ? 'Pause' : 'Start'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.controlButton, styles.resetButton]}
-                    onPress={() => resetGoal(goal.id)}
-                  >
-                    <Text style={styles.controlButtonText}>Reset</Text>
-                  </TouchableOpacity>
+                {/* Bottom Row */}
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="bg-white rounded-full px-3 py-1.5 flex-row items-center">
+                      <Ionicons name="time-outline" size={16} color="#6B7280" />
+                      <Text className="text-gray-700 font-semibold ml-1.5 text-sm">{goal.duration} min</Text>
+                    </View>
+                  </View>
+
+                  <View className="flex-row space-x-2">
+                    <TouchableOpacity
+                      onPress={() => deleteGoal(goal.id)}
+                      className="w-11 h-11 rounded-full bg-white items-center justify-center"
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    </TouchableOpacity>
+                    <TouchableOpacity className="w-11 h-11 rounded-full bg-white items-center justify-center">
+                      <Ionicons name="arrow-forward" size={18} color="#374151" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>🎯</Text>
-            <Text style={styles.emptyStateTitle}>No Goals Yet</Text>
-            <Text style={styles.emptyStateText}>
-              Create your first goal to get started
-            </Text>
-          </View>
-        )}
+            ))
+          )}
+        </View>
       </ScrollView>
-    </View>
-  );
+    </SafeAreaView>
+  )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    backgroundColor: '#6366f1',
-    paddingTop: 60,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#e0e7ff',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  addButton: {
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  formContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 16,
-  },
-  formSection: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
-  },
-  charCount: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 6,
-    textAlign: 'right',
-  },
-  numberInput: {
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
-  },
-  formButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  formButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  submitButton: {
-    backgroundColor: '#6366f1',
-  },
-  submitButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  goalsSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  goalCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 5,
-    borderLeftColor: '#6366f1',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  goalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  goalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1f2937',
-    flex: 1,
-    marginRight: 8,
-  },
-  deleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#fee2e2',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteButtonText: {
-    fontSize: 18,
-    color: '#dc2626',
-    fontWeight: '700',
-  },
-  timerContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
-  },
-  timerText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#6366f1',
-    letterSpacing: 1,
-  },
-  timerLabel: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 4,
-  },
-  progressBarContainer: {
-    height: 6,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#6366f1',
-    borderRadius: 3,
-  },
-  controlButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  controlButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  playButton: {
-    backgroundColor: '#d1fae5',
-  },
-  pauseButton: {
-    backgroundColor: '#fef3c7',
-  },
-  resetButton: {
-    backgroundColor: '#f3f4f6',
-  },
-  controlButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-});
