@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Image } from "react-native"
 import { useUser } from "@clerk/clerk-expo"
 import { AntDesign, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { calculateProgress, formatTime, isTimerComplete } from "@/lib/timer-utils"
 
 interface Goal {
   id: string
@@ -14,6 +15,10 @@ interface Goal {
   color: string
   icon: string
   rating: number
+  isRunning?: boolean
+  startTime?: number
+  elapsedSeconds?: number
+  isCompleted?: boolean
 }
 
 export default function HomeScreen() {
@@ -41,6 +46,44 @@ export default function HomeScreen() {
       rating: 4.2,
     },
   ])
+
+  const timerIntervalRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const hasRunningGoals = goals.some((goal) => goal.isRunning && !goal.isCompleted)
+
+    if (hasRunningGoals) {
+      timerIntervalRef.current = setInterval(() => {
+        setGoals((prevGoals) =>
+          prevGoals.map((goal) => {
+            if (!goal.isRunning || goal.isCompleted) return goal
+
+            const now = Date.now()
+            const elapsedSeconds = Math.floor((now - (goal.startTime || now)) / 1000)
+            const completed = isTimerComplete(elapsedSeconds, goal.duration)
+
+            return {
+              ...goal,
+              elapsedSeconds,
+              isCompleted: completed,
+              isRunning: !completed,
+            }
+          }),
+        )
+      }, 1000) as unknown as number
+    } else {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+        timerIntervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+      }
+    }
+  }, [goals])
 
   const addGoal = () => {
     if (!goalInput.trim()) {
@@ -72,6 +115,32 @@ export default function HomeScreen() {
       { text: "Cancel", style: "cancel" },
       { text: "Delete", onPress: () => setGoals(goals.filter((g) => g.id !== id)), style: "destructive" },
     ])
+  }
+
+  const toggleTimer = (goalId: string) => {
+    setGoals((prevGoals) =>
+      prevGoals.map((goal) => {
+        if (goal.id !== goalId) return goal
+
+        if (goal.isCompleted) {
+          return goal
+        }
+
+        if (goal.isRunning) {
+          return {
+            ...goal,
+            isRunning: false,
+          }
+        } else {
+          return {
+            ...goal,
+            isRunning: true,
+            startTime: Date.now() - (goal.elapsedSeconds || 0) * 1000,
+            elapsedSeconds: goal.elapsedSeconds || 0,
+          }
+        }
+      }),
+    )
   }
 
   return (
@@ -169,50 +238,83 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            goals.map((goal, index) => (
-              <View key={goal.id} className="rounded-3xl p-5 mb-4 shadow-sm" style={{ backgroundColor: goal.color }}>
-                {/* Top Row */}
-                <View className="flex-row items-center justify-between mb-4">
-                  <View className="w-12 h-12 rounded-2xl bg-white items-center justify-center">
-                    <MaterialCommunityIcons name={goal.icon as any} size={24} color="#374151" />
+            goals.map((goal, index) => {
+              const progress =
+                goal.isRunning || goal.isCompleted ? calculateProgress(goal.elapsedSeconds || 0, goal.duration) : 0
+
+              return (
+                <View key={goal.id} className="rounded-3xl p-5 mb-4 shadow-sm" style={{ backgroundColor: goal.color }}>
+                  {/* Top Row */}
+                  <View className="flex-row items-center justify-between mb-4">
+                    <View className="w-12 h-12 rounded-2xl bg-white items-center justify-center">
+                      <MaterialCommunityIcons name={goal.icon as any} size={24} color="#374151" />
+                    </View>
+                    {goal.isCompleted ? (
+                      <View className="flex-row items-center bg-green-500 rounded-full px-3 py-1.5">
+                        <Ionicons name="checkmark-circle" size={16} color="white" />
+                        <Text className="text-white font-bold ml-1 text-sm">Completed!</Text>
+                      </View>
+                    ) : goal.rating > 0 ? (
+                      <View className="flex-row items-center bg-white rounded-full px-3 py-1.5">
+                        <Ionicons name="star" size={16} color="#FCD34D" />
+                        <Text className="text-gray-900 font-bold ml-1 text-sm">{goal.rating}</Text>
+                      </View>
+                    ) : null}
                   </View>
-                  {goal.rating > 0 && (
-                    <View className="flex-row items-center bg-white rounded-full px-3 py-1.5">
-                      <Ionicons name="star" size={16} color="#FCD34D" />
-                      <Text className="text-gray-900 font-bold ml-1 text-sm">{goal.rating}</Text>
+
+                  {/* Category */}
+                  <Text className="text-gray-600 text-sm font-medium mb-1">{goal.category}</Text>
+
+                  {/* Title */}
+                  <Text className="text-gray-900 text-lg font-bold mb-4">{goal.title}</Text>
+
+                  {(goal.isRunning || goal.isCompleted) && (
+                    <View className="mb-4">
+                      <View className="h-2 bg-white/40 rounded-full overflow-hidden">
+                        <View className="h-full bg-gray-900 rounded-full" style={{ width: `${progress}%` }} />
+                      </View>
+                      <Text className="text-gray-700 text-xs font-semibold mt-1.5">
+                        {goal.isCompleted
+                          ? "Goal Complete!"
+                          : `${formatTime(goal.elapsedSeconds || 0)} / ${goal.duration} min`}
+                      </Text>
                     </View>
                   )}
-                </View>
 
-                {/* Category */}
-                <Text className="text-gray-600 text-sm font-medium mb-1">{goal.category}</Text>
+                  {/* Bottom Row */}
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <View className="bg-white rounded-full px-3 py-1.5 flex-row items-center">
+                        <Ionicons name="time-outline" size={16} color="#6B7280" />
+                        <Text className="text-gray-700 font-semibold ml-1.5 text-sm">{goal.duration} min</Text>
+                      </View>
+                    </View>
 
-                {/* Title */}
-                <Text className="text-gray-900 text-lg font-bold mb-4">{goal.title}</Text>
-
-                {/* Bottom Row */}
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <View className="bg-white rounded-full px-3 py-1.5 flex-row items-center">
-                      <Ionicons name="time-outline" size={16} color="#6B7280" />
-                      <Text className="text-gray-700 font-semibold ml-1.5 text-sm">{goal.duration} min</Text>
+                    <View className="flex-row space-x-2">
+                      <TouchableOpacity
+                        onPress={() => deleteGoal(goal.id)}
+                        className="w-11 h-11 rounded-full bg-white items-center justify-center"
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => toggleTimer(goal.id)}
+                        className="w-11 h-11 rounded-full bg-white items-center justify-center"
+                        disabled={goal.isCompleted}
+                      >
+                        {goal.isCompleted ? (
+                          <Ionicons name="checkmark" size={18} color="#10B981" />
+                        ) : goal.isRunning ? (
+                          <Ionicons name="pause" size={18} color="#374151" />
+                        ) : (
+                          <Ionicons name="play" size={18} color="#374151" />
+                        )}
+                      </TouchableOpacity>
                     </View>
                   </View>
-
-                  <View className="flex-row space-x-2">
-                    <TouchableOpacity
-                      onPress={() => deleteGoal(goal.id)}
-                      className="w-11 h-11 rounded-full bg-white items-center justify-center"
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                    </TouchableOpacity>
-                    <TouchableOpacity className="w-11 h-11 rounded-full bg-white items-center justify-center">
-                      <Ionicons name="arrow-forward" size={18} color="#374151" />
-                    </TouchableOpacity>
-                  </View>
                 </View>
-              </View>
-            ))
+              )
+            })
           )}
         </View>
       </ScrollView>
