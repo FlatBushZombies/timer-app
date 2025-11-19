@@ -6,6 +6,7 @@ import { useUser } from "@clerk/clerk-expo"
 import { AntDesign, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { calculateProgress, formatTime, isTimerComplete } from "@/lib/timer-utils"
+import { db } from "@/lib/db"
 
 interface Goal {
   id: string
@@ -48,6 +49,7 @@ export default function HomeScreen() {
   ])
 
   const timerIntervalRef = useRef<number | null>(null)
+  const savedGoalsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     const hasRunningGoals = goals.some((goal) => goal.isRunning && !goal.isCompleted)
@@ -85,6 +87,40 @@ export default function HomeScreen() {
     }
   }, [goals])
 
+  useEffect(() => {
+    const saveCompletedGoals = async () => {
+      if (!user?.id) return
+
+      for (const goal of goals) {
+        // Only save if completed and not already saved
+        if (goal.isCompleted && !savedGoalsRef.current.has(goal.id)) {
+          try {
+            await db.saveCompletedGoal({
+              userId: user.id,
+              title: goal.title,
+              duration: goal.duration,
+              category: goal.category,
+              color: goal.color,
+              icon: goal.icon,
+              rating: goal.rating,
+              elapsedSeconds: goal.elapsedSeconds || goal.duration * 60,
+            })
+            
+            // Mark as saved
+            savedGoalsRef.current.add(goal.id)
+            
+            console.log(`[v0] Saved completed goal to database: ${goal.title}`)
+          } catch (error) {
+            console.error('[v0] Error saving completed goal:', error)
+            Alert.alert('Error', 'Failed to save completed goal to database')
+          }
+        }
+      }
+    }
+
+    saveCompletedGoals()
+  }, [goals, user?.id])
+
   const addGoal = () => {
     if (!goalInput.trim()) {
       Alert.alert("Error", "Please enter a goal")
@@ -113,7 +149,14 @@ export default function HomeScreen() {
   const deleteGoal = (id: string) => {
     Alert.alert("Delete Goal", "Are you sure you want to delete this goal?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", onPress: () => setGoals(goals.filter((g) => g.id !== id)), style: "destructive" },
+      { 
+        text: "Delete", 
+        onPress: () => {
+          setGoals(goals.filter((g) => g.id !== id))
+          savedGoalsRef.current.delete(id)
+        }, 
+        style: "destructive" 
+      },
     ])
   }
 

@@ -1,5 +1,3 @@
-// Utility functions for timer calculations
-
 export interface TimerState {
   startTime: number
   elapsedSeconds: number
