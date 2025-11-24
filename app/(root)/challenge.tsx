@@ -1,11 +1,8 @@
 import { View, Text } from "react-native"
+import MapScreen from "../components/Map"
 
 const Challenge = () => {
-    return (
-        <View>
-            <Text> Challenge </Text>
-        </View>
-    )
+    return <MapScreen />
 }
 
 export default Challenge
