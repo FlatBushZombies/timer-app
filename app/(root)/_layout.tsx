@@ -14,7 +14,7 @@ const { width } = Dimensions.get("window");
 const TAB_COUNT = 4;
 const TAB_WIDTH = width / TAB_COUNT;
 
-/* -------------------------- CURVED BAR SHAPE -------------------------- */
+
 const CurvedBar = ({ activeIndex }: { activeIndex: Animated.SharedValue<number> }) => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -53,7 +53,7 @@ const CurvedBar = ({ activeIndex }: { activeIndex: Animated.SharedValue<number> 
   );
 };
 
-/* -------------------------- ICON COMPONENT ---------------------------- */
+
 const TabIcon = ({
   source,
   focused,
@@ -82,7 +82,6 @@ const TabIcon = ({
   );
 };
 
-/* -------------------------- CUSTOM TAB BAR ---------------------------- */
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const activeIndex = useSharedValue(state.index);
 

@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Image } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Image, Modal } from "react-native"
 import { useUser } from "@clerk/clerk-expo"
 import { AntDesign, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { calculateProgress, formatTime, isTimerComplete } from "@/lib/timer-utils"
 import { db } from "@/lib/db"
+import AnimatedFocusTimer from "../components/AnimatedFocusTimer"
 
 interface Goal {
   id: string
@@ -27,6 +28,7 @@ export default function HomeScreen() {
   const [showForm, setShowForm] = useState(false)
   const [goalInput, setGoalInput] = useState("")
   const [timerInput, setTimerInput] = useState("5")
+  const [focusGoalId, setFocusGoalId] = useState<string | null>(null)
   const [goals, setGoals] = useState<Goal[]>([
     {
       id: "1",
@@ -92,7 +94,6 @@ export default function HomeScreen() {
       if (!user?.id) return
 
       for (const goal of goals) {
-        // Only save if completed and not already saved
         if (goal.isCompleted && !savedGoalsRef.current.has(goal.id)) {
           try {
             await db.saveCompletedGoal({
@@ -105,10 +106,9 @@ export default function HomeScreen() {
               rating: goal.rating,
               elapsedSeconds: goal.elapsedSeconds || goal.duration * 60,
             })
-            
-            // Mark as saved
+
             savedGoalsRef.current.add(goal.id)
-            
+
             console.log(`[v0] Saved completed goal to database: ${goal.title}`)
           } catch (error) {
             console.error('[v0] Error saving completed goal:', error)
@@ -149,18 +149,20 @@ export default function HomeScreen() {
   const deleteGoal = (id: string) => {
     Alert.alert("Delete Goal", "Are you sure you want to delete this goal?", [
       { text: "Cancel", style: "cancel" },
-      { 
-        text: "Delete", 
+      {
+        text: "Delete",
         onPress: () => {
           setGoals(goals.filter((g) => g.id !== id))
           savedGoalsRef.current.delete(id)
-        }, 
-        style: "destructive" 
+        },
+        style: "destructive"
       },
     ])
   }
 
   const toggleTimer = (goalId: string) => {
+    const goal = goals.find(g => g.id === goalId)
+    
     setGoals((prevGoals) =>
       prevGoals.map((goal) => {
         if (goal.id !== goalId) return goal
@@ -175,6 +177,7 @@ export default function HomeScreen() {
             isRunning: false,
           }
         } else {
+          setFocusGoalId(goalId)
           return {
             ...goal,
             isRunning: true,
@@ -186,8 +189,25 @@ export default function HomeScreen() {
     )
   }
 
+  const focusGoal = goals.find(g => g.id === focusGoalId)
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
+      {/* <CHANGE> Add animated focus timer modal */}
+      {focusGoal && (
+        <Modal
+          visible={!!focusGoalId}
+          animationType="fade"
+          transparent={false}
+        >
+          <AnimatedFocusTimer
+            goal={focusGoal}
+            onClose={() => setFocusGoalId(null)}
+            onToggleTimer={() => toggleTimer(focusGoal.id)}
+          />
+        </Modal>
+      )}
+
       {/* Header */}
       <View className="px-5 py-4 bg-white">
         <View className="flex-row items-center justify-between">
