@@ -138,7 +138,7 @@ export default function Layout() {
         name="task"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} source={icons.pencil} />
+            <TabIcon focused={focused} source={icons.check} />
           ),
         }}
       />
@@ -147,7 +147,7 @@ export default function Layout() {
         name="challenge"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} source={icons.bag} />
+            <TabIcon focused={focused} source={icons.map} />
           ),
         }}
       />
