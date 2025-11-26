@@ -10,6 +10,7 @@ import pencil from '@/assets/icons/pencil.png'
 import bag from '@/assets/icons/bag.png'
 import map from "@/assets/icons/map.png"
 import check from '@/assets/icons/check.png'
+import collab from '@/assets/icons/collaboration.png'
 
 export const icons = {
     google,
@@ -19,7 +20,8 @@ export const icons = {
     pencil,
     bag,
     map,
-    check
+    check,
+    collab
 }
 
 export const images = {

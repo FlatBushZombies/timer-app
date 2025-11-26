@@ -151,6 +151,14 @@ export default function Layout() {
           ),
         }}
       />
+       <Tabs.Screen
+        name="teams"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.collab} />
+          ),
+        }}
+      />
 
       <Tabs.Screen
         name="profile"
