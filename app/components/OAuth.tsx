@@ -1,47 +1,67 @@
+
+import { useState } from "react";
 import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
-import { Alert, Image, View } from "react-native";
-
+import { Alert, Image, Text, View } from "react-native";
+import CustomButton from "./CustomButton";
 import { icons } from "@/constants";
 import { googleOAuth } from "@/lib/auth";
-import CustomButton from "./CustomButton";
-import OnboardingCarousel from "./OnboardingCarousel";
 
 const OAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
-    const result = await googleOAuth(startOAuthFlow);
+    if (loading) return;
+    setLoading(true);
 
-    if (result.code === "session_exists") {
-      Alert.alert("Success", "Session exists. Redirecting to home screen.");
-      router.replace("/(root)/home");
+    try {
+      const result = await googleOAuth(startOAuthFlow);
+      console.log("OAuth result:", result);
+
+      if (result.success) {
+        // Use setTimeout to ensure navigation happens after current render cycle
+        setTimeout(() => {
+          if (result.isNewUser) {
+            console.log("Navigating to onboarding for new user");
+            router.replace("/(auth)/onboarding");
+          } else {
+            console.log("Navigating to home for existing user");
+            router.replace("/(root)/home");
+          }
+        }, 100);
+      } else if (result.cancelled) {
+        Alert.alert("Cancelled", result.message || "Sign-in cancelled.");
+      } else {
+        Alert.alert("Error", result.message || "Google login failed");
+      }
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+      Alert.alert(
+        "Authentication Error", 
+        "There was an issue with Google sign-in. Please try again or use email/password login."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    Alert.alert(result.success ? "Success" : "Error", result.message);
   };
 
   return (
-    <View>
-      <OnboardingCarousel />
-      <View className="flex flex-row justify-center items-center mt-4 gap-x-3">
-        <View className="flex-1 h-[1px] bg-general-100" />
-        <View className="flex-1 h-[1px] bg-general-100" />
+    <View className="flex-1 justify-center items-center p-6 bg-white">
+      <View className="flex-row justify-center items-center w-full mb-4">
+        <View className="flex-1 h-[1px] bg-gray-200" />
+        <Text className="mx-3 text-gray-500 text-lg">Or</Text>
+        <View className="flex-1 h-[1px] bg-gray-200" />
       </View>
 
       <CustomButton
-        title="Log In with Google"
-        className="mt-5 w-full shadow-none"
+        title={loading ? "Signing in..." : "Log In with Google"}
+        className="w-full"
         IconLeft={() => (
-          <Image
-            source={icons.google}
-            resizeMode="contain"
-            className="w-5 h-5 mx-2"
-          />
+          <Image source={icons.google} resizeMode="contain" className="w-5 h-5 mx-2" />
         )}
-        bgVariant="outline"
-        textVariant="primary"
         onPress={handleGoogleSignIn}
+        disabled={loading}
       />
     </View>
   );
